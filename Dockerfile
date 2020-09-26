@@ -1,22 +1,18 @@
 FROM python:3.8.5-slim-buster
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+EXPOSE 5000
 
 RUN adduser --system --group --home /home/app app
 
 WORKDIR /home/app
 
-COPY ./requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache --only-binary :all: -r requirements.txt
+COPY --chown=app:app ./requirements.txt ./
 
-COPY . .
+RUN pip install --upgrade pip && \
+    pip install --no-cache --only-binary :all: -r requirements.txt
 
-RUN chown -R app:app .
+COPY --chown=app:app . .
 
 USER app
 
-EXPOSE 5000/tcp
-
-CMD ["python", "-m btestlab_recordservice", "run"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "btestlab_recordservice.app:app"]
